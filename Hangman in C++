@@ -1,0 +1,117 @@
+#include <iostream>
+#include <random>
+#include <vector>
+#include "Random.h"
+#include <limits>
+
+namespace WordList {
+    std::vector<std::string> words{"mystery","broccoli","account","almost","spaghetti",
+        "opinion","beautiful","distance","luggage"};
+    std::string& get_RandomWord() {
+        return words[std::uniform_int_distribution<int>{0,8}(Random::mt)];
+    }
+}
+
+class Session {
+private:
+    std::string m_word{WordList::get_RandomWord()};
+    int m_guessTake{static_cast<int>(m_word.length())};
+    std::vector<bool> guess_char{std::vector<bool>(26)};
+
+    std::size_t toIndex(const char& c) {
+        return (c%32)-1;
+    }
+public:
+    std::string& get_word() {
+        return m_word;
+    }
+    int& guess_take() {
+        return m_guessTake;
+    }
+    bool is_charInWord(const char& c) const {
+        for (char temp:m_word) {
+            if (temp==c) {
+                return true;
+            }
+        }
+        return false;
+    }
+    void set_char(const char& c) {
+        guess_char[toIndex(c)]=true;
+    }
+    bool ischar_guessed(const char& c) {
+        return guess_char[toIndex(c)];
+    }
+    bool is_won() {
+        for (char temp:m_word) {
+            if (!ischar_guessed(temp)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    void decre_guess() {
+        m_guessTake--;
+    }
+};
+
+void display(Session& s) {
+    std::cout<<"The Word is: ";
+    for (char temp:s.get_word()) {
+        if (s.ischar_guessed(temp)) {
+            std::cout<<temp;
+        }else {
+            std::cout<<'_';
+        }
+    }
+    std::cout<<'\n';
+}
+
+char get_input(Session& s) {
+    while (true) {
+        std::cout<<"Enter your next letter: ";
+        char c{};
+        std::cin>>c;
+        if (std::cin.fail()) {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout<<"Thats a invalid input sir\n";
+            continue;
+        }
+        if (c<'a' || c>'z') {
+            std::cout<<"Thats a invalid input sir\n";
+            continue;
+        }
+        if (s.ischar_guessed(c)) {
+            std::cout<<"This value is already guess try something new\n";
+            continue;
+        }
+        return c;
+    }
+}
+
+void check_char(Session& s,const char& c) {
+    s.set_char(c);
+    if (s.is_charInWord(c)) {
+        std::cout<<"Right guess BABY!!!\n";
+    }else {
+        std::cout<<"OOPS WRONG MAN\n";
+    }
+    s.decre_guess();
+}
+
+int main() {
+    Session s{};
+    while (s.guess_take() && !s.is_won()) {
+        display(s);
+        char c{get_input(s)};
+        check_char(s,c);
+    }
+    display(s);
+    if (!s.is_won()) {
+        std::cout<<"You lose the word was: "<<s.get_word()<<'\n';
+    }else {
+        std::cout<<"Damn you Win man\n";
+    }
+    return 0;
+}
